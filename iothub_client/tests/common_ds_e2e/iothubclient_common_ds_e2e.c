@@ -1255,7 +1255,7 @@ static void receive_device_streaming_request_test(IOTHUB_PROVISIONED_DEVICE* dev
     
     for (int i = 0; i < 10; i++)
     {
-        int delay = ((rand() % 60) + 10);
+        int delay = ((rand() % 30) + 10);
         printf("try:%d, delay=%d\n", i, delay);
         ThreadAPI_Sleep(delay * 1000);
         streaming_result = verify_streaming_through_gateway(dsTestCtx);
