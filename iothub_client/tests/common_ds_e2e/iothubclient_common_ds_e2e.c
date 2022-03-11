@@ -1250,6 +1250,7 @@ static void receive_device_streaming_request_test(IOTHUB_PROVISIONED_DEVICE* dev
     verify_request_result = verify_device_streaming_requests_received(dsTestCtx);
     ASSERT_ARE_EQUAL(int, 0, verify_request_result);
 
+    ThreadAPI_Sleep(40 * 1000);
     streaming_result = verify_streaming_through_gateway(dsTestCtx);
     ASSERT_ARE_EQUAL(int, 0, streaming_result);
 
