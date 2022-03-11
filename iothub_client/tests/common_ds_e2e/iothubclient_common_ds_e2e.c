@@ -1250,8 +1250,20 @@ static void receive_device_streaming_request_test(IOTHUB_PROVISIONED_DEVICE* dev
     verify_request_result = verify_device_streaming_requests_received(dsTestCtx);
     ASSERT_ARE_EQUAL(int, 0, verify_request_result);
 
-    ThreadAPI_Sleep(40 * 1000);
-    streaming_result = verify_streaming_through_gateway(dsTestCtx);
+    time_t t;
+    srand((unsigned)time(&t));
+    
+    for (int i = 0; i < 10; i++)
+    {
+        int delay = ((rand() % 60) + 10);
+        printf("try:%d, delay=%d\n", i, delay);
+        ThreadAPI_Sleep(delay * 1000);
+        streaming_result = verify_streaming_through_gateway(dsTestCtx);
+        if (streaming_result == 0)
+        {
+            break;
+        }
+    }
     ASSERT_ARE_EQUAL(int, 0, streaming_result);
 
     // close the client connection
