@@ -433,6 +433,22 @@ static int ds_e2e_send_device_streaming_request_async(const char* deviceId, cons
                         {
                             unsigned int statusCode = 0;
 
+                            time_t t;    
+                            char* timeString;
+#if LOGGER_DISABLE_PAL
+                            t = time(NULL);
+                            timeString = ctime(&t);
+#else  // LOGGER_DISABLE_PAL
+                            t = get_time(NULL);
+                            timeString = get_ctime(&t);
+#endif // LOGGER_DISABLE_PAL
+
+                            // In case time is not implemented
+                            timeString = timeString == NULL ? "<NO TIME IMPL>" : timeString;
+
+                            //systemMessage = printf_alloc("Info: Time:%.24s File:%s Func:%s Line:%d %s", timeString, file, func, line, lastErrorAsString);
+                            printf("Info: Time:%.24s POST %s\n", timeString, STRING_c_str(relativePath));
+
                             if (HTTPAPIEX_SAS_ExecuteRequest(httpExApiSasHandle, httpExApiHandle, HTTPAPI_REQUEST_POST, STRING_c_str(relativePath), httpHeader, NULL, &statusCode, httpResponseHeaders, responseBuffer) != HTTPAPIEX_OK)
                             {
                                 LogError("Failed sending device streaming HTTP request");
@@ -440,6 +456,18 @@ static int ds_e2e_send_device_streaming_request_async(const char* deviceId, cons
                             }
                             else
                             {
+#if LOGGER_DISABLE_PAL
+                                t = time(NULL);
+                                timeString = ctime(&t);
+#else  // LOGGER_DISABLE_PAL
+                                t = get_time(NULL);
+                                timeString = get_ctime(&t);
+#endif // LOGGER_DISABLE_PAL
+
+                                // In case time is not implemented
+                                timeString = timeString == NULL ? "<NO TIME IMPL>" : timeString;
+                                printf("Info: Time:%.24s POST RESPONSE(%d) %s\n", timeString, statusCode, BUFFER_u_char(responseBuffer));
+
                                 if (statusCode == 200)
                                 {
                                     bool isAccepted;
@@ -966,6 +994,8 @@ static UWS_CLIENT_HANDLE create_websocket_client(char* url, char* authorizationT
     size_t port = 0;
     char* resourceName = NULL;
 
+    //ThreadAPI_Sleep(5 * 1000);
+
     if (parse_streaming_gateway_url(url, &hostAddress, &port, &resourceName) != 0)
     {
         LogError("[TEST] Could not parse the ws url");
@@ -1033,6 +1063,24 @@ static int verify_single_streaming_through_gateway(EXPECTED_DEVICE_STREAMING_REQ
     deviceClientCtx.dataReceived = NULL;
     deviceClientCtx.expDSReq = expDSReq;
 
+    ThreadAPI_Sleep(10 * 1000);
+
+    time_t t;
+    char* timeString;
+#if LOGGER_DISABLE_PAL
+    t = time(NULL);
+    timeString = ctime(&t);
+#else  // LOGGER_DISABLE_PAL
+    t = get_time(NULL);
+    timeString = get_ctime(&t);
+#endif // LOGGER_DISABLE_PAL
+
+    // In case time is not implemented
+    timeString = timeString == NULL ? "<NO TIME IMPL>" : timeString;
+
+    //systemMessage = printf_alloc("Info: Time:%.24s File:%s Func:%s Line:%d %s", timeString, file, func, line, lastErrorAsString);
+    printf("Info: Time:%.24s create_websocket_client(deviceWSClient) %s\n", timeString, expDSReq->request->url);
+
     if ((deviceWSClient = create_websocket_client(expDSReq->request->url, expDSReq->request->authorization_token, &deviceClientCtx)) == NULL)
     {
         LogError("[TEST] Failed creating/opening device websocket client (%s)", expDSReq->streamName);
@@ -1054,6 +1102,21 @@ static int verify_single_streaming_through_gateway(EXPECTED_DEVICE_STREAMING_REQ
         serviceClientCtx.dataReceived = NULL;
         serviceClientCtx.expDSReq = expDSReq;
 
+        ThreadAPI_Sleep(10 * 1000);
+
+#if LOGGER_DISABLE_PAL
+        t = time(NULL);
+        timeString = ctime(&t);
+#else  // LOGGER_DISABLE_PAL
+        t = get_time(NULL);
+        timeString = get_ctime(&t);
+#endif // LOGGER_DISABLE_PAL
+
+        // In case time is not implemented
+        timeString = timeString == NULL ? "<NO TIME IMPL>" : timeString;
+
+        //systemMessage = printf_alloc("Info: Time:%.24s File:%s Func:%s Line:%d %s", timeString, file, func, line, lastErrorAsString);
+        printf("Info: Time:%.24s create_websocket_client(serviceWSClient) %s\n", timeString, expDSReq->response->url);
         serviceWSClient = create_websocket_client(expDSReq->response->url, expDSReq->response->authorizationToken, &serviceClientCtx);
 
         if (serviceWSClient == NULL)
@@ -1231,15 +1294,17 @@ static void receive_device_streaming_request_test(IOTHUB_PROVISIONED_DEVICE* dev
 
     EXPECTED_DEVICE_STREAMING_REQUEST* request = add_expected_streaming_request(dsTestCtx, shouldAcceptRequest, 0);
 
+    ThreadAPI_Sleep(5 * 1000);
     while (true)
     {
+        printf("ds_e2e_send_device_streaming_request_async send_request_counter:%d\n", send_request_counter);
         if (ds_e2e_send_device_streaming_request_async(deviceToUse->deviceId, deviceToUse->moduleId, request) == 0)
         {
             break;
         }
         else if (send_request_counter++ < MAX_SEND_REQUEST_COUNT)
         {
-            ThreadAPI_Sleep(500);
+            ThreadAPI_Sleep(15 * 1000);
         }
         else
         {
@@ -1250,20 +1315,8 @@ static void receive_device_streaming_request_test(IOTHUB_PROVISIONED_DEVICE* dev
     verify_request_result = verify_device_streaming_requests_received(dsTestCtx);
     ASSERT_ARE_EQUAL(int, 0, verify_request_result);
 
-    time_t t;
-    srand((unsigned)time(&t));
-    
-    for (int i = 0; i < 10; i++)
-    {
-        int delay = ((rand() % 30) + 10);
-        printf("try:%d, delay=%d\n", i, delay);
-        ThreadAPI_Sleep(delay * 1000);
-        streaming_result = verify_streaming_through_gateway(dsTestCtx);
-        if (streaming_result == 0)
-        {
-            break;
-        }
-    }
+    streaming_result = verify_streaming_through_gateway(dsTestCtx);
+
     ASSERT_ARE_EQUAL(int, 0, streaming_result);
 
     // close the client connection

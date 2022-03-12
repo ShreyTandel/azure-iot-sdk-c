@@ -26,7 +26,7 @@ TEST_FUNCTION(IoTHub_Accept_Device_Streaming_Request_MQTT_e2e)
 
 TEST_FUNCTION(IoTHub_Reject_Device_Streaming_Request_MQTT_e2e)
 {
-    ds_e2e_receive_device_streaming_request(MQTT_Protocol, false);
+//    ds_e2e_receive_device_streaming_request(MQTT_Protocol, false);
 }
 
 END_TEST_SUITE(iothubclient_mqtt_ds_e2e)
