@@ -201,8 +201,10 @@ int main(void)
     // Free all the sdk subsystem
     IoTHub_Deinit();
 
+#if 0
     (void)printf("Press enter key to exit:\r\n");
     (void)getchar();
+#endif
 
     return 0;
 }
