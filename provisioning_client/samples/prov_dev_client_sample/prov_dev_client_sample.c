@@ -54,6 +54,11 @@
 #include "certs.h"
 #endif // SET_TRUSTED_CERT_IN_SAMPLES
 
+#if defined(HSM_AUTH_TYPE_CUSTOM)
+char* custom_hsm_get_id_scope();
+void custom_hsm_set_device_provision_file(char *pFile);
+#endif
+
 // This sample is to demostrate iothub reconnection with provisioning and should not
 // be confused as production code
 
@@ -91,12 +96,21 @@ static void register_device_callback(PROV_DEVICE_RESULT register_result, const c
     g_registration_complete = true;
 }
 
+#if defined(HSM_AUTH_TYPE_CUSTOM)
+int main(int argc, char *argv[])
+#else
 int main(void)
+#endif
 {
     SECURE_DEVICE_TYPE hsm_type;
     //hsm_type = SECURE_DEVICE_TYPE_TPM;
     hsm_type = SECURE_DEVICE_TYPE_X509;
     //hsm_type = SECURE_DEVICE_TYPE_SYMMETRIC_KEY;
+
+#if defined(HSM_AUTH_TYPE_CUSTOM)
+    if (2 <= argc)
+        custom_hsm_set_device_provision_file(argv[1]);
+#endif
 
     // Used to initialize IoTHub SDK subsystem
     (void)IoTHub_Init();
@@ -139,6 +153,9 @@ int main(void)
 
     PROV_DEVICE_RESULT prov_device_result = PROV_DEVICE_RESULT_ERROR;
     PROV_DEVICE_HANDLE prov_device_handle;
+#if defined(HSM_AUTH_TYPE_CUSTOM)
+    id_scope = custom_hsm_get_id_scope();
+#endif
     if ((prov_device_handle = Prov_Device_Create(global_prov_uri, id_scope, prov_transport)) == NULL)
     {
         (void)printf("failed calling Prov_Device_Create\r\n");
