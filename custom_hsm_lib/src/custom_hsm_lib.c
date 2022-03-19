@@ -63,6 +63,20 @@ exit:
     return status;
 }
 
+static int sanitizeData(char *pData, int dataLen)
+{
+    int i = 0, shift = 0;
+    while ((i + shift) < dataLen)
+    {
+        while ('\r' == pData[i + shift])
+            shift++;
+
+        pData[i] = pData[i + shift];
+        i++;
+    }
+    return i;
+}
+
 int hsm_client_x509_init(void)
 {
     int status = -1;
@@ -149,11 +163,15 @@ int hsm_client_x509_init(void)
         goto exit;
     }
 
+    pInfo->certLen = sanitizeData(pInfo->pCert, pInfo->certLen);
+
     if (0 != readFile(pInfo->pKeyFile, &(pInfo->pKey), &(pInfo->keyLen)))
     {
         printf("Failed to read %s file\n", pInfo->pKeyFile);
         goto exit;
     }
+
+    pInfo->keyLen = sanitizeData(pInfo->pKey, pInfo->keyLen);
 
     status = 0;
 
