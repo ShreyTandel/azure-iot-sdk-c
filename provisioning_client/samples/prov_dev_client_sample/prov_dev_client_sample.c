@@ -56,6 +56,7 @@
 
 #if defined(HSM_AUTH_TYPE_CUSTOM)
 char* custom_hsm_get_id_scope();
+char* custom_hsm_get_ca_cert();
 void custom_hsm_set_device_provision_file(char *pFile);
 #endif
 
@@ -162,6 +163,13 @@ int main(void)
     }
     else
     {
+#if defined(HSM_AUTH_TYPE_CUSTOM)
+        if (NULL != custom_hsm_get_ca_cert())
+        {
+            Prov_Device_SetOption(prov_device_handle, OPTION_TRUSTED_CERT, custom_hsm_get_ca_cert());
+        }
+#endif
+
         if (http_proxy.host_address != NULL)
         {
             Prov_Device_SetOption(prov_device_handle, OPTION_HTTP_PROXY, &http_proxy);

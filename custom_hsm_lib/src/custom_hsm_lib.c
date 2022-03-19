@@ -23,6 +23,9 @@ typedef struct
     char *pKeyFile;
     char *pKey;
     int keyLen;
+    char *pCaCertFile;
+    char *pCaCert;
+    int caCertLen;
 } CustomX509Info;
 
 static char *pDevProvFile = DEVICE_PROVISION_JSON;
@@ -143,6 +146,12 @@ int hsm_client_x509_init(void)
         goto exit;
     }
 
+    pItem = cJSON_GetObjectItem(pInfo->pCJson, "ca_cert_pem");
+    if (NULL != pItem)
+    {
+        pInfo->pCaCertFile = pItem->valuestring;
+    }
+
     if (0 != readFile(pInfo->pCertFile, &(pInfo->pCert), &(pInfo->certLen)))
     {
         printf("Failed to read %s file\n", pInfo->pCertFile);
@@ -153,6 +162,15 @@ int hsm_client_x509_init(void)
     {
         printf("Failed to read %s file\n", pInfo->pKeyFile);
         goto exit;
+    }
+
+    if (NULL != pInfo->pCaCertFile)
+    {
+        if (0 != readFile(pInfo->pCaCertFile, &(pInfo->pCaCert), &(pInfo->caCertLen)))
+        {
+            printf("Failed to read %s file\n", pInfo->pCaCertFile);
+            goto exit;
+        }
     }
 
     status = 0;
@@ -166,6 +184,11 @@ void hsm_client_x509_deinit(void)
 {
     if (NULL != pInfo)
     {
+        if (NULL != pInfo->pCaCert)
+        {
+            free(pInfo->pCaCert);
+        }
+
         if (NULL != pInfo->pKey)
         {
             free(pInfo->pKey);
@@ -287,6 +310,14 @@ char* custom_hsm_get_id_scope()
 {
     if (NULL != pInfo)
         return pInfo->pIdScope;
+    else
+        return NULL;
+}
+
+char* custom_hsm_get_ca_cert()
+{
+    if (NULL != pInfo)
+        return pInfo->pCaCert;
     else
         return NULL;
 }
