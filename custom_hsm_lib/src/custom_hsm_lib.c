@@ -66,6 +66,7 @@ exit:
 int hsm_client_x509_init(void)
 {
     int status = -1;
+    cJSON *pItem;
 
     if (NULL != pInfo)
         hsm_client_x509_deinit();
@@ -90,28 +91,55 @@ int hsm_client_x509_init(void)
         goto exit;
     }
 
-    pInfo->pIdScope = cJSON_GetObjectItem(pInfo->pCJson, "id_scope")->valuestring;
-    if (NULL == pInfo->pIdScope)
+    pItem = cJSON_GetObjectItem(pInfo->pCJson, "id_scope");
+    if (NULL == pItem)
     {
         printf("Missing id_scope in device provision JSON\n");
         goto exit;
     }
-    pInfo->pRegistrationId = cJSON_GetObjectItem(pInfo->pCJson, "registration_id")->valuestring;
-    if (NULL == pInfo->pRegistrationId)
+    pInfo->pIdScope = pItem->valuestring;
+    if (NULL == pInfo->pIdScope)
+    {
+        printf("Found invalid id_scope value\n");
+        goto exit;
+    }
+
+    pItem = cJSON_GetObjectItem(pInfo->pCJson, "registration_id");
+    if (NULL == pItem)
     {
         printf("Missing registration_id in device provision JSON\n");
         goto exit;
     }
-    pInfo->pCertFile = cJSON_GetObjectItem(pInfo->pCJson, "device_pem_certificate")->valuestring;
-    if (NULL == pInfo->pCertFile)
+    pInfo->pRegistrationId = pItem->valuestring;
+    if (NULL == pInfo->pRegistrationId)
+    {
+        printf("Found invalid registration_id value\n");
+        goto exit;
+    }
+
+    pItem = cJSON_GetObjectItem(pInfo->pCJson, "device_pem_certificate");
+    if (NULL == pItem)
     {
         printf("Missing device_pem_certificate in device provision JSON\n");
         goto exit;
     }
-    pInfo->pKeyFile = cJSON_GetObjectItem(pInfo->pCJson, "device_pem_private_key")->valuestring;
-    if (NULL == pInfo->pKeyFile)
+    pInfo->pCertFile = pItem->valuestring;
+    if (NULL == pInfo->pCertFile)
+    {
+        printf("Found invalid device_pem_certificate value\n");
+        goto exit;
+    }
+
+    pItem = cJSON_GetObjectItem(pInfo->pCJson, "device_pem_private_key");
+    if (NULL == pItem)
     {
         printf("Missing device_pem_private_key in device provision JSON\n");
+        goto exit;
+    }
+    pInfo->pKeyFile = pItem->valuestring;
+    if (NULL == pInfo->pKeyFile)
+    {
+        printf("Found invalid device_pem_private_key value\n");
         goto exit;
     }
 
